@@ -15,26 +15,22 @@ namespace marketplace.Services
     {
         private readonly AppDBContext context;
         private readonly IConfiguration configuration;
-        private readonly string pepper;
-        private readonly int iteration = 3;
 
         public UserService(AppDBContext context, IConfiguration configuration)
         {
             this.context = context;
             this.configuration = configuration;
-            pepper = Environment.GetEnvironmentVariable("PasswordHashExamplePepper");
         }
 
         public async Task<UserResource> Login(LoginResource resource, CancellationToken cancellationToken)
         {
             var user = await context.Users
-                .FirstOrDefaultAsync(x => x.Email == resource.Email, cancellationToken);
+                .FirstOrDefaultAsync(x => x.Email.Equals(resource.Email), cancellationToken);
 
             if (user == null)
                 throw new Exception("Email does not exist.");
 
-            var passwordHash = PasswordHasherService.ComputeHash(resource.Password, user.PasswordSalt, pepper, iteration);
-            if (user.PasswordHash != passwordHash)
+            if (!BCrypt.Net.BCrypt.Verify(resource.Password, user.PasswordHash))
                 throw new Exception("Password did not match.");
 
             return new UserResource(user.Id, user.Email, CreateToken(user));
@@ -45,10 +41,8 @@ namespace marketplace.Services
             var newUser = new User
             {
                 Email = resource.Email,
-                PasswordSalt = PasswordHasherService.GenerateSalt()
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(resource.Password)
             };
-
-            newUser.PasswordHash = PasswordHasherService.ComputeHash(resource.Password, newUser.PasswordSalt, pepper, iteration);
             var user = await context.Users.AddAsync(newUser, cancellationToken);
             await context.SaveChangesAsync(cancellationToken);
             return new UserResource(user.Entity.Id, user.Entity.Email, CreateToken(user.Entity));
