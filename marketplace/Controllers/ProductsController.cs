@@ -1,12 +1,12 @@
 ﻿using marketplace.Interfaces;
 using marketplace.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
 namespace marketplace.Controllers
 {
-    [ApiController]
-    [Route("api/[controller]")]
+    [ApiController, Route("api/[controller]"), Authorize]
     public class ProductsController : ControllerBase
     {
         private readonly IProductService productService;
