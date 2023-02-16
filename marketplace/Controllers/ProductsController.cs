@@ -1,44 +1,43 @@
 ﻿using marketplace.Interfaces;
 using marketplace.Models;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
 namespace marketplace.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class ProductsController
+    public class ProductsController : ControllerBase
     {
         private readonly IProductService productService;
-        private readonly ILogger logger;
 
-        public ProductsController(IProductService productService, ILogger logger)
+        public ProductsController(IProductService productService)
         {
             this.productService = productService;
-            this.logger = logger;
         }
 
         [HttpGet]
-        public async Task<List<Product>> Get()
+        public async Task<ActionResult<List<Product>>> Get()
         {
-            return await this.productService.GetAllProducts();
+            return Ok(await this.productService.GetAllProducts());
         }
 
         [HttpPost]
-        public async Task<Product> Get(Product product)
+        public async Task<ActionResult<Product>> Get(Product product)
         {
-            return await productService.AddProduct(product);
+            return Ok(await productService.AddProduct(product));
         }
 
         [HttpPut]
-        public async Task<Product?> Update(Product updatedProduct)
+        public async Task<ActionResult<Product?>> Update(Product updatedProduct)
         {
-            return await productService.UpdateProduct(updatedProduct);
+            return Ok(await productService.UpdateProduct(updatedProduct));
         }
 
         [HttpDelete("{id}")]
-        public async Task<Product?> Delete(int id)
+        public async Task<ActionResult<Product?>> Delete(int id)
         {
-            return await productService.DeleteProduct(id);
+            return Ok(await productService.DeleteProduct(id));
         }
     }
 }
