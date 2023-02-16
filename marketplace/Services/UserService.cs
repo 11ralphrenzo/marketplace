@@ -63,7 +63,8 @@ namespace marketplace.Services
         {
             List<Claim> claims = new List<Claim>()
             {
-                new Claim(ClaimTypes.Email, user.Email)
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Role, "Admin")
             };
 
             var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8

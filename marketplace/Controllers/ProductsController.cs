@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace marketplace.Controllers
 {
-    [ApiController, Route("api/[controller]"), Authorize]
+    [ApiController, Route("api/[controller]"), Authorize(Roles = "Admin")]
     public class ProductsController : ControllerBase
     {
         private readonly IProductService productService;

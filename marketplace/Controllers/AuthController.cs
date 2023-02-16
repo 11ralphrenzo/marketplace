@@ -16,8 +16,7 @@ using System.Threading;
 
 namespace marketplace.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
+    [ApiController, Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
         public static User user = new User();
