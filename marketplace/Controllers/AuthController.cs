@@ -1,4 +1,9 @@
-﻿using marketplace.Models;
+﻿using marketplace.Interfaces;
+using marketplace.Models;
+using marketplace.Resources;
+using marketplace.Responses;
+using marketplace.Services;
+using marketplace.Utilities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -7,6 +12,7 @@ using System.Security;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text.Unicode;
+using System.Threading;
 
 namespace marketplace.Controllers
 {
@@ -15,77 +21,56 @@ namespace marketplace.Controllers
     public class AuthController : ControllerBase
     {
         public static User user = new User();
-        private readonly IConfiguration configuration;
+        private readonly IUserService userService;
 
-        public AuthController(IConfiguration configuration)
+        public AuthController(IUserService userService)
         {
-            this.configuration = configuration;
+            this.userService = userService;
         }
 
         [HttpPost("Register")]
-        public async Task<ActionResult<User>> Register(UserDto request)
+        public async Task<ActionResult<User>> Register([FromBody] RegisterResource resource, CancellationToken cancellationToken)
         {
-            CreatePasswordHash(request.Password, out byte[] passwordHash, out byte[] passwordSalt);
+            var errors = new ErrorResponse();
+            try
+            {
+                #region Validations
+                if (!resource.Email.IsValidEmail())
+                    errors.Messages.Add("Invalid Email.");
+                else if (await userService.IsExistingEmail(resource.Email))
+                    errors.Messages.Add("Email already exist.");
 
-            user.Email = request.Email;
-            user.PasswordSalt = passwordSalt;
-            user.PasswordHash = passwordHash;
+                if (!resource.Password.IsValidPassword())
+                    errors.Messages.Add("Invalid Password.");
 
-            return Ok(user);
+                if (errors.Messages.Any())
+                    return BadRequest(errors);
+                #endregion
+
+                var response = await userService.Register(resource, cancellationToken);
+                return Ok(response);
+            }
+            catch (Exception e)
+            {
+                errors.Messages.Add(e.Message);
+                return BadRequest(errors);
+            }
         }
 
         [HttpPost("Login")]
-        public async Task<ActionResult<string>> Login(UserDto request)
+        public async Task<IActionResult> Login([FromBody] LoginResource resource, CancellationToken cancellationToken)
         {
-            if (user.Email != request.Email)
-                return BadRequest("Email not found!");
-
-            if (!VerifyPasswordHash(request.Password, user.PasswordHash, user.PasswordSalt))
-                return BadRequest("Wrong Password!");
-
-            var token = CreateToken(user);
-            return Ok(token);
-        }
-
-        private void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt)
-        {
-            using (var hmac = new HMACSHA512()) 
+            var errors = new ErrorResponse();
+            try
             {
-                passwordSalt = hmac.Key;
-                passwordHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
+                var response = await userService.Login(resource, cancellationToken);
+                return Ok(response);
             }
-        }
-
-        private bool VerifyPasswordHash(string password, byte[] passwordHash, byte[] passwordSalt)
-        {
-            using (var hmac = new HMACSHA512(passwordSalt))
+            catch (Exception e)
             {
-                passwordSalt = hmac.Key;
-                var computeHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
-                return computeHash.SequenceEqual(passwordHash);
+                errors.Messages.Add(e.Message);
+                return BadRequest(errors);
             }
-        }
-
-        private string CreateToken(User user)
-        {
-            List<Claim> claims = new List<Claim>()
-            {
-                new Claim(ClaimTypes.Email, user.Email)
-            };
-
-            var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8
-                .GetBytes(configuration.GetSection("AppSettings:Token").Value));
-
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
-
-            var token = new JwtSecurityToken(
-                claims: claims, 
-                expires: DateTime.Now.AddDays(1),
-                signingCredentials: creds);
-
-            var jwt = new JwtSecurityTokenHandler().WriteToken(token);
-
-            return jwt;
         }
     }
 }
