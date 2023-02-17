@@ -4,6 +4,7 @@ using marketplace.Resources;
 using marketplace.Responses;
 using marketplace.Services;
 using marketplace.Utilities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -16,7 +17,7 @@ using System.Threading;
 
 namespace marketplace.Controllers
 {
-    [ApiController, Route("api/[controller]")]
+    [ApiController, Route("api/[controller]"), AllowAnonymous]
     public class AuthController : ControllerBase
     {
         public static User user = new User();
@@ -28,25 +29,25 @@ namespace marketplace.Controllers
         }
 
         [HttpPost("Register")]
-        public async Task<ActionResult<User>> Register([FromBody] RegisterResource resource, CancellationToken cancellationToken)
+        public async Task<ActionResult<User>> Post([FromBody] RegisterRequest request, CancellationToken cancellationToken)
         {
             var errors = new ErrorResponse();
             try
             {
                 #region Validations
-                if (!resource.Email.IsValidEmail())
+                if (!request.Email.IsValidEmail())
                     errors.Messages.Add("Invalid Email.");
-                else if (await userService.IsExistingEmail(resource.Email))
+                else if (await userService.IsExistingEmail(request.Email))
                     errors.Messages.Add("Email already exist.");
 
-                if (!resource.Password.IsValidPassword())
+                if (!request.Password.IsValidPassword())
                     errors.Messages.Add("Invalid Password.");
 
                 if (errors.Messages.Any())
                     return BadRequest(errors);
                 #endregion
 
-                var response = await userService.Register(resource, cancellationToken);
+                var response = await userService.Register(request, cancellationToken);
                 return Ok(response);
             }
             catch (Exception e)
@@ -57,12 +58,12 @@ namespace marketplace.Controllers
         }
 
         [HttpPost("Login")]
-        public async Task<IActionResult> Login([FromBody] LoginResource resource, CancellationToken cancellationToken)
+        public async Task<IActionResult> Post([FromBody] LoginResource request, CancellationToken cancellationToken)
         {
             var errors = new ErrorResponse();
             try
             {
-                var response = await userService.Login(resource, cancellationToken);
+                var response = await userService.Login(request, cancellationToken);
                 return Ok(response);
             }
             catch (Exception e)

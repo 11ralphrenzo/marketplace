@@ -15,11 +15,13 @@ namespace marketplace.Services
     {
         private readonly AppDBContext context;
         private readonly IConfiguration configuration;
+        private readonly ICustomerService customerService;
 
-        public UserService(AppDBContext context, IConfiguration configuration)
+        public UserService(AppDBContext context, IConfiguration configuration, ICustomerService customerService)
         {
             this.context = context;
             this.configuration = configuration;
+            this.customerService = customerService;
         }
 
         public async Task<UserResource> Login(LoginResource resource, CancellationToken cancellationToken)
@@ -36,7 +38,7 @@ namespace marketplace.Services
             return new UserResource(user.Id, user.Email, CreateToken(user));
         }
 
-        public async Task<UserResource?> Register(RegisterResource resource, CancellationToken cancellationToken)
+        public async Task<RegisterResponse> Register(RegisterRequest resource, CancellationToken cancellationToken)
         {
             var newUser = new User
             {
@@ -44,8 +46,10 @@ namespace marketplace.Services
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(resource.Password)
             };
             var user = await context.Users.AddAsync(newUser, cancellationToken);
+            if (user is not null)
+                await customerService.AddCustomer(user.Entity, cancellationToken, false);
             await context.SaveChangesAsync(cancellationToken);
-            return new UserResource(user.Entity.Id, user.Entity.Email, CreateToken(user.Entity));
+            return new RegisterResponse(user.Entity.Id, user.Entity.Email, user.Entity.Role, CreateToken(user.Entity));
         }
 
         public async Task<bool> IsExistingEmail(string email)
@@ -58,7 +62,7 @@ namespace marketplace.Services
             List<Claim> claims = new List<Claim>()
             {
                 new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Role, "Admin")
+                new Claim(ClaimTypes.Role, user.Role.ToString())
             };
 
             var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8

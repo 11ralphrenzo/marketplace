@@ -44,11 +44,15 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 // Database Context
 builder.Services.AddDbContextPool<AppDBContext>(options => 
-        options.UseSqlServer(builder.Configuration.GetConnectionString("Marketplace")));
+        options
+            //.UseLazyLoadingProxies()
+            .UseSqlServer(builder.Configuration.GetConnectionString("Marketplace")));
 
 // Add Services
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<ICustomerService, CustomerService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
 
 var app = builder.Build();
 

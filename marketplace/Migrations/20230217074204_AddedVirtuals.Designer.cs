@@ -12,8 +12,8 @@ using marketplace.Data;
 namespace marketplace.Migrations
 {
     [DbContext(typeof(AppDBContext))]
-    [Migration("20230215163727_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20230217074204_AddedVirtuals")]
+    partial class AddedVirtuals
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -33,21 +33,12 @@ namespace marketplace.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Address")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("FirstName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("LastName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Phone")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Customers");
                 });
@@ -121,6 +112,41 @@ namespace marketplace.Migrations
                     b.ToTable("Products");
                 });
 
+            modelBuilder.Entity("marketplace.Models.User", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("marketplace.Models.Customer", b =>
+                {
+                    b.HasOne("marketplace.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("marketplace.Models.Order", b =>
                 {
                     b.HasOne("marketplace.Models.Customer", "Customer")
@@ -135,7 +161,7 @@ namespace marketplace.Migrations
             modelBuilder.Entity("marketplace.Models.OrderDetail", b =>
                 {
                     b.HasOne("marketplace.Models.Order", "Order")
-                        .WithMany("OrderDetaills")
+                        .WithMany("OrderDetails")
                         .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -158,7 +184,7 @@ namespace marketplace.Migrations
 
             modelBuilder.Entity("marketplace.Models.Order", b =>
                 {
-                    b.Navigation("OrderDetaills");
+                    b.Navigation("OrderDetails");
                 });
 #pragma warning restore 612, 618
         }

@@ -30,24 +30,12 @@ namespace marketplace.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Address")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Email")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("FirstName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("LastName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Phone")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Customers");
                 });
@@ -137,9 +125,23 @@ namespace marketplace.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("Role")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("marketplace.Models.Customer", b =>
+                {
+                    b.HasOne("marketplace.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("marketplace.Models.Order", b =>
@@ -156,7 +158,7 @@ namespace marketplace.Migrations
             modelBuilder.Entity("marketplace.Models.OrderDetail", b =>
                 {
                     b.HasOne("marketplace.Models.Order", "Order")
-                        .WithMany("OrderDetaills")
+                        .WithMany("OrderDetails")
                         .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -179,7 +181,7 @@ namespace marketplace.Migrations
 
             modelBuilder.Entity("marketplace.Models.Order", b =>
                 {
-                    b.Navigation("OrderDetaills");
+                    b.Navigation("OrderDetails");
                 });
 #pragma warning restore 612, 618
         }
