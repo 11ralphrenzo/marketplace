@@ -22,7 +22,7 @@ namespace marketplace.Controllers
         }
 
         // POST api/<OrderController>
-        [HttpPost("AddOrder")]
+        [HttpPost]
         public async Task<ActionResult<OrderResponse>> Post([FromBody] OrderRequest request, CancellationToken cancellationToken)
         {
             var errors = new ErrorResponse();
@@ -38,7 +38,7 @@ namespace marketplace.Controllers
             }
         }
 
-        [HttpGet("GetOrders")]
+        [HttpGet]
         public async Task<ActionResult<List<Order>>> Get(CancellationToken cancellationToken)
         {
             var errors = new ErrorResponse();

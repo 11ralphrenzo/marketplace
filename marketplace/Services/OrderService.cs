@@ -49,6 +49,7 @@ namespace marketplace.Services
         public async Task<List<Order>> GetAllOrders(CancellationToken cancellationToken)
         {
             return await context.Orders
+                .Include(x => x.Customer)
                 .OrderByDescending(o => o.OrderPlaced)
                 .ToListAsync();
         }
