@@ -12,8 +12,8 @@ using marketplace.Data;
 namespace marketplace.Migrations
 {
     [DbContext(typeof(AppDBContext))]
-    [Migration("20230217074204_AddedVirtuals")]
-    partial class AddedVirtuals
+    [Migration("20230218073649_InitialMigration")]
+    partial class InitialMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -121,6 +121,10 @@ namespace marketplace.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
